@@ -71,7 +71,7 @@ try {
     // get operation
 app.get('/car',async(req,res)=>{
 
-const {search}= req.query
+// const {search}= req.query
 let cursor
 
 // if(search){
@@ -87,24 +87,24 @@ res.send(result)
 })
 
 
-// app.get('/featured',async(req,res)=>{
-// const cursor = coursCullection.find().limit(4)
-// const result =await cursor.toArray()
-// // console.log(result)
-// res.send(result)
-// })
+app.get('/available-cars',async(req,res)=>{
+const cursor = carsCullection.find().limit(4)
+const result =await cursor.toArray()
+// console.log(result)
+res.send(result)
+})
 
 
  
 // get Operation by id
-app.get('/courses/:id' ,async(req,res)=>{
+app.get('/car/:id' ,async(req,res)=>{
 
    console.log(req?.user)
     const id = req.params.id
     const query= {
         _id: new ObjectId(id)
     }
-    const result = await coursCullection.findOne(query)
+    const result = await carsCullection.findOne(query)
     res.send(result)
 })
 
