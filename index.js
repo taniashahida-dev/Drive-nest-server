@@ -122,35 +122,10 @@ app.get('/explore/:id' ,async(req,res)=>{
 
 
 
-// patch operation
-// app.patch('/users/:id' ,async(req,res)=>{
-//     const id= req.params.id
-//    console.log('new user is come',id)
-// const filter={
-//   _id: new ObjectId(id)
-// }
-// const newUser = req.body
-//     const updateDocument ={
-//          $set: {
-//     name: newUser.name,
-//     role: newUser.role
-//    }
-//     }
-//     console.log("After update",newUser)
-//     const result = await userCullection.updateOne(filter,updateDocument)
-//     res.send(result)
-// })
 
 
-// Delete operation
-// app.delete('/users/:id' ,async(req,res)=>{
-//     const id = req.params.id
-//     const query= {
-//         _id: new ObjectId(id)
-//     }
-//     const result = await userCullection.deleteOne(query)
-//     res.send(result)
-// })
+
+
 
 // car bookings 
 
@@ -174,6 +149,44 @@ app.post('/user-cars' , async (req,res)=>{
      console.log(result)
     res.send(result)
 })
+app.get('/user-cars' , async (req,res)=>{
+   
+     const result = await userCarCullection.find().toArray()
+     console.log(result)
+    res.send(result)
+})
+
+
+// patch operation
+app.patch('/user-cars/:id' ,async(req,res)=>{
+    const id= req.params.id
+   console.log('new car is come',id)
+const filter={
+  _id: new ObjectId(id)
+}
+const newCarData = req.body
+    const updateDocument ={
+         $set:  newCarData
+   
+    }
+    console.log("After update",newUser)
+    const result = await userCarCullection.updateOne(filter,updateDocument)
+    res.send(result)
+})
+
+
+// Delete operation
+app.delete('/user-cars/:id' ,async(req,res)=>{
+    const id = req.params.id
+    const query= {
+        _id: new ObjectId(id)
+    }
+    const result = await userCarCullection.deleteOne(query)
+    res.send(result)
+})
+
+
+
 
 
     await client.db('admin').command({ping:1})
