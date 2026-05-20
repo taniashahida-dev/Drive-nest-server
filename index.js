@@ -66,6 +66,7 @@ try {
     const db = client.db('drive-nest')
     const carsCullection = db.collection('cars')
     const bookingCullection = db.collection('booking')
+    const userCarCullection = db.collection('user-car')
 
 
 
@@ -166,6 +167,13 @@ app.get('/bookings' , async (req,res)=>{
     res.send(result)
 })
 
+//user added cars api 
+app.post('/user-cars' , async (req,res)=>{
+    const carData = req.body
+     const result = await userCarCullection.insertOne(carData)
+     console.log(result)
+    res.send(result)
+})
 
 
     await client.db('admin').command({ping:1})
