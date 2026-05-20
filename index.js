@@ -65,6 +65,7 @@ try {
   
     const db = client.db('drive-nest')
     const carsCullection = db.collection('cars')
+    const bookingCullection = db.collection('booking')
 
 
 
@@ -97,7 +98,7 @@ res.send(result)
 
  
 // get Operation by 
-app.get('/car/:id' ,async(req,res)=>{
+app.get('/explore/:id' ,async(req,res)=>{
 
    console.log(req?.user)
     const id = req.params.id
@@ -150,7 +151,20 @@ app.get('/car/:id' ,async(req,res)=>{
 //     res.send(result)
 // })
 
+// car bookings 
 
+app.post('/bookings' , async (req,res)=>{
+    const bookingData = req.body
+     const result = await bookingCullection.insertOne(bookingData)
+     console.log(result)
+    res.send(result)
+})
+app.get('/bookings' , async (req,res)=>{
+   
+     const result = await bookingCullection.find().toArray()
+     console.log(result)
+    res.send(result)
+})
 
 
 
