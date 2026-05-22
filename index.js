@@ -66,15 +66,32 @@ const run = async () => {
     const userCarCullection = db.collection("user-car");
 
     // get operation
-    app.get("/car", async (req, res) => {
-      const defaultCars = await carsCullection.find().toArray();
+   app.get("/car", async (req, res) => {
 
-      const userCars = await userCarCullection.find().toArray();
+  const search = req.query.search || ""
 
-      const allCars = [...defaultCars, ...userCars];
+  const type = req.query.type || ""
+  const defaultCars = await carsCullection.find().toArray()
 
-      res.send(allCars);
-    });
+  const userCars = await userCarCullection.find().toArray()
+  let allCars = [...defaultCars, ...userCars]
+  if (search) {
+
+    allCars = allCars.filter(car =>
+      car.name
+        ?.toLowerCase()
+        .includes(search.toLowerCase())
+    )
+  }
+  if (type) {
+
+    allCars = allCars.filter(car =>
+      car.carType === type
+    )
+  }
+
+  res.send(allCars)
+})
 
     app.get("/available-cars", async (req, res) => {
       const cursor = carsCullection.find().limit(8);
