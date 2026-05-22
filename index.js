@@ -145,7 +145,7 @@ const run = async () => {
     // patch operation
     app.patch("/user-cars/:id", async (req, res) => {
       const id = req.params.id;
-      console.log("new car is come", id);
+      // console.log("new car is come", id);
       const filter = {
         _id: new ObjectId(id),
       };
