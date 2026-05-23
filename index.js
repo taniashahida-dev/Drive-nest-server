@@ -10,11 +10,6 @@ const uri = process.env.MONGODB_URI;
 app.use(cors());
 app.use(express.json());
 
-//  const JWKS = createRemoteJWKSet(
-//       new URL('http://localhost:3000/api/auth/jwks')
-//     )
-// console.log(JWKS)
-
 app.get("/", (req, res) => {
   res.send("server runinggg");
 });
@@ -27,34 +22,57 @@ const client = new MongoClient(uri, {
   },
 });
 
-// const loggin =async(req,res,next)=>{
-//  const { authorization} = req.headers
-//  const token = authorization?.split(' ')[1];
+// const loggin = async (req, res, next) => {
+//   const { authorization } = req.headers;
+//   const token = authorization?.split(" ")[1];
 
-// if(!token){
-//     res.status(401).json({message: 'Unautharized'})
-// }
-
-//  try {
+//   if (!token) {
+//     return   res.status(401).json({ message: "Unauthorized" });
+//   }
+//   try {
 //     const JWKS = createRemoteJWKSet(
-//       new URL( `${process.env.CLIENT_URL}/api/auth/jwks`)
-//     )
-//     const { payload } = await jwtVerify(token, JWKS, )
+//       new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+//     );
+//     const { payload } = await jwtVerify(token, JWKS);
 
-//  req.user = payload
-// //  console.log( req.user)
-//     // return payload
-//     next()
+//     req.user = payload;
+
+//     return next();
 //   } catch (error) {
-//     console.error('Token validation failed:', error)
-//     res.status(401).json({message: 'Unautharized'})
+//     console.error("Token validation failed:", error);
+//     res.status(401).json({ message: "Unautharized" });
 //   }
 
-//  console.log(token)
-// console.log(authoraize)
-// console.log(req)
+//   console.log(token);
+// };
 
-// }
+
+
+const loggin = async (req, res, next) => {
+
+  const { authorization } = req.headers;
+
+  if (!authorization) {
+    return res.status(401).json({
+      message: "Unauthorized"
+    });
+  }
+
+  const token = authorization.split(" ")[1];
+
+  console.log("TOKEN:", token);
+
+  // fake verify na
+  // token ase kina sudhu check
+
+  req.user = {
+    email: req.params.email
+  };
+
+  next();
+};
+
+
 
 const run = async () => {
   try {
@@ -65,62 +83,85 @@ const run = async () => {
     const bookingCullection = db.collection("booking");
     const userCarCullection = db.collection("user-car");
 
-    // get operation
-   app.get("/car", async (req, res) => {
+    app.get("/car", async (req, res) => {
+      const search = req.query.search || "";
 
-  const search = req.query.search || ""
+      const type = req.query.type || "";
 
-  const type = req.query.type || ""
-  const defaultCars = await carsCullection.find().toArray()
+      // SEARCH QUERY
+      let searchQuery = {};
 
-  const userCars = await userCarCullection.find().toArray()
-  let allCars = [...defaultCars, ...userCars]
-  if (search) {
+      // regex search
+      if (search) {
+        searchQuery.name = {
+          $regex: search,
+          $options: "i",
+        };
+      }
 
-    allCars = allCars.filter(car =>
-      car.name
-        ?.toLowerCase()
-        .includes(search.toLowerCase())
-    )
-  }
-  if (type) {
+      if (type) {
+        searchQuery.carType = type;
+      }
 
-    allCars = allCars.filter(car =>
-      car.carType === type
-    )
-  }
+      const defaultCars = await carsCullection.find(searchQuery).toArray();
 
-  res.send(allCars)
-})
+      const userCars = await userCarCullection.find(searchQuery).toArray();
+
+      const allCars = [...defaultCars, ...userCars];
+
+      res.send(allCars);
+    });
 
     app.get("/available-cars", async (req, res) => {
-      const cursor = carsCullection.find().limit(8);
-      const result = await cursor.toArray();
-      // console.log(result)
+
+  const query = {
+
+    availability: {
+      $regex: "^available$",
+      $options: "i"
+    }
+
+  }
+
+  const defaultCars = await carsCullection
+    .find(query)
+    .toArray()
+
+  const userCars = await userCarCullection
+    .find(query)
+    .toArray()
+
+  const allCars = [
+    ...defaultCars,
+    ...userCars
+  ]
+
+  const availableCars =
+    allCars.slice(0, 8)
+
+  res.send(availableCars)
+
+})
+
+    // get Operation by
+    app.get("/explore/:id", loggin, async (req, res) => {
+      const id = req.params.id;
+
+      const query = {
+        _id: new ObjectId(id),
+      };
+
+      // first search in main cars
+      let result = await carsCullection.findOne(query);
+
+      // if not found search in user cars
+      if (!result) {
+        result = await userCarCullection.findOne(query);
+      }
+
       res.send(result);
     });
 
-    // get Operation by
-    app.get("/explore/:id", async (req, res) => {
-
-  const id = req.params.id
-
-  const query = {
-    _id: new ObjectId(id),
-  }
-
-  // first search in main cars
-  let result = await carsCullection.findOne(query)
-
-  // if not found search in user cars
-  if (!result) {
-    result = await userCarCullection.findOne(query)
-  }
-
-  res.send(result)
-})
-
-   
     // car bookings
 
     app.post("/bookings", async (req, res) => {
@@ -129,14 +170,51 @@ const run = async () => {
 
       res.send(result);
     });
-    app.get("/bookings/:email", async (req, res) => {
+    app.get("/bookings/:email", loggin, async (req, res) => {
       const { email } = req.params;
-
+      if (req.user.email !== email) {
+        return res.status(403).json({
+          message: "Forbidden",
+        });
+      }
       const result = await bookingCullection
         .find({
           userEmail: email,
         })
         .toArray();
+
+      res.send(result);
+    });
+
+    app.delete("/bookings/:id", async (req, res) => {
+      const { id } = req.params;
+      const query = {
+        _id: new ObjectId(id),
+      };
+      const result = await bookingCullection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.patch("/booking-count/:id", async (req, res) => {
+      const { id } = req.params;
+
+      const filter = {
+        _id: new ObjectId(id),
+      };
+
+      let result = await carsCullection.updateOne(filter, {
+        $inc: {
+          bookingCount: 1,
+        },
+      });
+
+      if (result.matchedCount === 0) {
+        result = await userCarCullection.updateOne(filter, {
+          $inc: {
+            bookingCount: 1,
+          },
+        });
+      }
 
       res.send(result);
     });
@@ -148,7 +226,7 @@ const run = async () => {
       console.log(result);
       res.send(result);
     });
-    app.get("/user-cars/:email", async (req, res) => {
+    app.get("/user-cars/:email", loggin, async (req, res) => {
       const { email } = req.params;
       const result = await userCarCullection
         .find({
@@ -184,8 +262,6 @@ const run = async () => {
       const result = await userCarCullection.deleteOne(query);
       res.send(result);
     });
-
-    
 
     await client.db("admin").command({ ping: 1 });
     console.log(
