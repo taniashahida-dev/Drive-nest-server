@@ -22,7 +22,7 @@ const client = new MongoClient(uri, {
   },
 });
 
-// const loggin = async (req, res, next) => {
+
 //   const { authorization } = req.headers;
 //   const token = authorization?.split(" ")[1];
 
@@ -76,7 +76,7 @@ const loggin = async (req, res, next) => {
 
 const run = async () => {
   try {
-    await client.connect();
+    // await client.connect();
 
     const db = client.db("drive-nest");
     const carsCullection = db.collection("cars");
@@ -263,7 +263,7 @@ const run = async () => {
       res.send(result);
     });
 
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
